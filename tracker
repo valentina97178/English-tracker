@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📚 英文進度追蹤</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0;
+            background: white;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: #4c51bf;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            padding: 15px;
+            background: white;
+        }
+        
+        .stat-card {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            border-left: 4px solid #4c51bf;
+        }
+        
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #4c51bf;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            color: #666;
+        }
+        
+        .total-progress {
+            grid-column: 1 / -1;
+            background: #4c51bf;
+            color: white;
+            border-left: none;
+        }
+        
+        .total-progress .stat-number {
+            color: white;
+            font-size: 2rem;
+        }
+        
+        .week-tabs {
+            display: flex;
+            overflow-x: auto;
+            padding: 10px 15px;
+            gap: 8px;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .week-tab {
+            flex: 0 0 auto;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            background: #e2e8f0;
+            color: #4a5568;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .week-tab.active {
+            background: #4c51bf;
+            color: white;
+        }
+        
+        .content {
+            padding: 15px;
+            padding-bottom: 80px;
+        }
+        
+        .week-content {
+            display: none;
+        }
+        
+        .week-content.active {
+            display: block;
+        }
+        
+        .class-info {
+            background: #f0fff4;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border-left: 4px solid #38a169;
+        }
+        
+        .class-info h3 {
+            color: #38a169;
+            margin-bottom: 8px;
+        }
+        
+        .tasks {
+            background: #fffaf0;
+            padding: 15px;
+            border-radius: 12px;
+            border-left: 4px solid #ed8936;
+        }
+        
+        .tasks h3 {
+            color: #ed8936;
+            margin-bottom: 15px;
+        }
+        
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            margin: 8px 0;
+            background: white;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+        
+        .task-item:active {
+            transform: scale(0.98);
+        }
+        
+        .task-item.completed {
+            background: #f0fff4;
+            border-color: #38a169;
+            opacity: 0.8;
+        }
+        
+        .task-item.completed .task-text {
+            text-decoration: line-through;
+            color: #38a169;
+        }
+        
+        .checkbox {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #e2e8f0;
+            border-radius: 50%;
+            margin-right: 12px;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        
+        .task-item.completed .checkbox {
+            background: #38a169;
+            border-color: #38a169;
+        }
+        
+        .task-item.completed .checkbox::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .task-icon {
+            font-size: 1.2rem;
+            margin-right: 8px;
+        }
+        
+        .task-text {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .progress-section {
+            margin: 15px 0;
+        }
+        
+        .progress-bar {
+            background: #e2e8f0;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4c51bf, #667eea);
+            transition: width 0.5s ease;
+        }
+        
+        .progress-text {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #4a5568;
+            font-weight: 500;
+        }
+        
+        .celebration {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            border-radius: 12px;
+            margin: 15px 0;
+            display: none;
+        }
+        
+        .celebration.show {
+            display: block;
+            animation: bounce 0.6s ease;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 53%, 80%, 100% { transform: scale(1); }
+            40%, 43% { transform: scale(1.1); }
+            70% { transform: scale(1.05); }
+        }
+        
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+            padding: 10px;
+            display: flex;
+            gap: 8px;
+            z-index: 100;
+        }
+        
+        .nav-btn {
+            flex: 1;
+            padding: 8px 4px;
+            border: none;
+            border-radius: 8px;
+            background: #e2e8f0;
+            color: #4a5568;
+            font-size: 0.7rem;
+            font-weight: 500;
+            text-align: center;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+        
+        .nav-btn.primary {
+            background: #4c51bf;
+            color: white;
+        }
+        
+        .nav-icon {
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 英文進度追蹤</h1>
+            <p>暑期學習 · 目標達成</p>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card total-progress">
+                <div class="stat-number" id="totalProgress">0%</div>
+                <div class="stat-label">總進度</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="vocabProgress">0%</div>
+                <div class="stat-label">📚 單字</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="readingProgress">0%</div>
+                <div class="stat-label">📖 閱讀</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="essayProgress">0%</div>
+                <div class="stat-label">✒️ 作文</div>
+            </div>
+        </div>
+
+        <div class="week-tabs">
+            <button class="week-tab active" data-week="1">第1週</button>
+            <button class="week-tab" data-week="2">第2週</button>
+            <button class="week-tab" data-week="3">第3週</button>
+            <button class="week-tab" data-week="4">第4週</button>
+            <button class="week-tab" data-week="5">第5週</button>
+            <button class="week-tab" data-week="6">第6週</button>
+            <button class="week-tab" data-week="7">第7週</button>
+            <button class="week-tab" data-week="8">第8週</button>
+        </div>
+
+        <div class="content">
+            <!-- Week 1 -->
+            <div class="week-content active" id="week1">
+                <div class="class-info">
+                    <h3>📅 第1週 (7/6)</h3>
+                    <p><strong>課程：</strong>Lesson 1 + 圖片作文</p>
+                </div>
+                <div class="tasks">
+                    <h3>✅ 學習任務</h3>
+                    <div class="task-item" data-task-id="vocab_1_5" data-category="vocab">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📚</span>
+                        <span class="task-text">單字 1-5回</span>
+                    </div>
+                    <div class="task-item" data-task-id="translation_1_2" data-category="translation">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">✍️</span>
+                        <span class="task-text">翻譯 1-2回</span>
+                    </div>
+                    <div class="task-item" data-task-id="cloze_1_5" data-category="cloze">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📝</span>
+                        <span class="task-text">克漏字 1-5回</span>
+                    </div>
+                    <div class="task-item" data-task-id="reading_1_5" data-category="reading">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📖</span>
+                        <span class="task-text">閱讀 1-5回</span>
+                    </div>
+                    <div class="task-item" data-task-id="essay_1" data-category="essay">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">✒️</span>
+                        <span class="task-text">作文第1篇</span>
+                    </div>
+                    <div class="task-item" data-task-id="b5_1" data-category="b5">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📘</span>
+                        <span class="task-text">B5課文第1回</span>
+                    </div>
+                    <div class="progress-section">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="week1Progress"></div>
+                        </div>
+                        <div class="progress-text">完成度: <span id="week1Percent">0%</span></div>
+                    </div>
+                </div>
+                <div class="celebration" id="celebration1">
+                    <h2>🎉 第1週完成！</h2>
+                    <p>Lesson 1 學習完成！</p>
+                </div>
+            </div>
+
+            <!-- Week 2 -->
+            <div class="week-content" id="week2">
+                <div class="class-info">
+                    <h3>📅 第2週 (7/13)</h3>
+                    <p><strong>課程：</strong>Lesson 2 + 圖片作文</p>
+                </div>
+                <div class="tasks">
+                    <h3>✅ 學習任務</h3>
+                    <div class="task-item" data-task-id="vocab_6_10" data-category="vocab">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📚</span>
+                        <span class="task-text">單字 6-10回</span>
+                    </div>
+                    <div class="task-item" data-task-id="translation_3_4" data-category="translation">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">✍️</span>
+                        <span class="task-text">翻譯 3-4回</span>
+                    </div>
+                    <div class="task-item" data-task-id="cloze_6_10" data-category="cloze">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📝</span>
+                        <span class="task-text">克漏字 6-10回</span>
+                    </div>
+                    <div class="task-item" data-task-id="reading_6_10" data-category="reading">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📖</span>
+                        <span class="task-text">閱讀 6-10回</span>
+                    </div>
+                    <div class="task-item" data-task-id="essay_2" data-category="essay">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">✒️</span>
+                        <span class="task-text">作文第2篇</span>
+                    </div>
+                    <div class="task-item" data-task-id="b5_2" data-category="b5">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📘</span>
+                        <span class="task-text">B5課文第2回</span>
+                    </div>
+                    <div class="progress-section">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="week2Progress"></div>
+                        </div>
+                        <div class="progress-text">完成度: <span id="week2Percent">0%</span></div>
+                    </div>
+                </div>
+                <div class="celebration" id="celebration2">
+                    <h2>🎉 第2週完成！</h2>
+                    <p>持續進步中！</p>
+                </div>
+            </div>
+
+            <!-- Week 3 -->
+            <div class="week-content" id="week3">
+                <div class="class-info">
+                    <h3>📅 第3週 (7/20)</h3>
+                    <p><strong>課程：</strong>Lesson 3 + 圖片作文</p>
+                </div>
+                <div class="tasks">
+                    <h3>✅ 學習任務</h3>
+                    <div class="task-item" data-task-id="vocab_11_15" data-category="vocab">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📚</span>
+                        <span class="task-text">單字 11-15回</span>
+                    </div>
+                    <div class="task-item" data-task-id="translation_5_6" data-category="translation">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">✍️</span>
+                        <span class="task-text">翻譯 5-6回</span>
+                    </div>
+                    <div class="task-item" data-task-id="cloze_11_15" data-category="cloze">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📝</span>
+                        <span class="task-text">克漏字 11-15回</span>
+                    </div>
+                    <div class="task-item" data-task-id="reading_11_15" data-category="reading">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📖</span>
+                        <span class="task-text">閱讀 11-15回</span>
+                    </div>
+                    <div class="task-item" data-task-id="essay_3" data-category="essay">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">✒️</span>
+                        <span class="task-text">作文第3篇</span>
+                    </div>
+                    <div class="task-item" data-task-id="b5_3" data-category="b5">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📘</span>
+                        <span class="task-text">B5課文第3回</span>
+                    </div>
+                    <div class="progress-section">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="week3Progress"></div>
+                        </div>
+                        <div class="progress-text">完成度: <span id="week3Percent">0%</span></div>
+                    </div>
+                </div>
+                <div class="celebration" id="celebration3">
+                    <h2>🎉 第3週完成！</h2>
+                    <p>學習節奏很穩定！</p>
+                </div>
+            </div>
+            
+            <!-- Week 4 -->
+            <div class="week-content" id="week4">
+                <div class="class-info">
+                    <h3>📅 第4週 (7/27)</h3>
+                    <p><strong>課程：</strong>Lesson 4 + 論說文</p>
+                </div>
+                <div class="tasks">
+                    <h3>✅ 學習任務</h3>
+                    <div class="task-item" data-task-id="vocab_16_20" data-category="vocab">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📚</span>
+                        <span class="task-text">單字 16-20回</span>
+                    </div>
+                    <div class="task-item" data-task-id="translation_7_8" data-category="translation">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">✍️</span>
+                        <span class="task-text">翻譯 7-8回</span>
+                    </div>
+                    <div class="task-item" data-task-id="cloze_16_20" data-category="cloze">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📝</span>
+                        <span class="task-text">克漏字 16-20回</span>
+                    </div>
+                    <div class="task-item" data-task-id="reading_16_20" data-category="reading">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📖</span>
+                        <span class="task-text">閱讀 16-20回</span>
+                    </div>
+                    <div class="task-item" data-task-id="essay_4" data-category="essay">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">✒️</span>
+                        <span class="task-text">作文第4篇</span>
+                    </div>
+                    <div class="task-item" data-task-id="b5_4" data-category="b5">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📘</span>
+                        <span class="task-text">B5課文第4回</span>
+                    </div>
+                    <div class="progress-section">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="week4Progress"></div>
+                        </div>
+                        <div class="progress-text">完成度: <span id="week4Percent">0%</span></div>
+                    </div>
+                </div>
+                <div class="celebration" id="celebration4">
+                    <h2>🎉 第4週完成！</h2>
+                    <p>已經過半了！</p>
+                </div>
+            </div>
+
+            <!-- Week 5 -->
+            <div class="week-content" id="week5">
+                <div class="class-info">
+                    <h3>📅 第5週 (8/3)</h3>
+                    <p><strong>課程：</strong>Lesson 5 + 模擬考</p>
+                </div>
+                <div class="tasks">
+                    <h3>✅ 學習任務</h3>
+                    <div class="task-item" data-task-id="vocab_21_25" data-category="vocab">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📚</span>
+                        <span class="task-text">單字 21-25回</span>
+                    </div>
+                    <div class="task-item" data-task-id="translation_9_10" data-category="translation">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">✍️</span>
+                        <span class="task-text">翻譯 9-10回</span>
+                    </div>
+                    <div class="task-item" data-task-id="cloze_21_25" data-category="cloze">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📝</span>
+                        <span class="task-text">克漏字 21-25回</span>
+                    </div>
+                    <div class="task-item" data-task-id="reading_21_25" data-category="reading">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📖</span>
+                        <span class="task-text">閱讀 21-25回</span>
+                    </div>
+                    <div class="task-item" data-task-id="mock_5" data-category="mock">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📋</span>
+                        <span class="task-text">模擬測驗第1回</span>
+                    </div>
+                    <div class="task-item" data-task-id="essay_5" data-category="essay">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">✒️</span>
+                        <span class="task-text">作文第5篇</span>
+                    </div>
+                    <div class="task-item" data-task-id="b5_5" data-category="b5">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📘</span>
+                        <span class="task-text">B5課文第5回</span>
+                    </div>
+                    <div class="progress-section">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="week5Progress"></div>
+                        </div>
+                        <div class="progress-text">完成度: <span id="week5Percent">0%</span></div>
+                    </div>
+                </div>
+                <div class="celebration" id="celebration5">
+                    <h2>🎉 第5週完成！</h2>
+                    <p>進入複習階段！</p>
+                </div>
+            </div>
+
+            <!-- Week 6 -->
+            <div class="week-content" id="week6">
+                <div class="class-info">
+                    <h3>📅 第6週 (8/10)</h3>
+                    <p><strong>課程：</strong>L1-2複習 + 書信作文</p>
+                </div>
+                <div class="tasks">
+                    <h3>✅ 學習任務</h3>
+                    <div class="task-item" data-task-id="vocab_26_30" data-category="vocab">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📚</span>
+                        <span class="task-text">單字 26-30回</span>
+                    </div>
+                    <div class="task-item" data-task-id="translation_11_12" data-category="translation">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">✍️</span>
+                        <span class="task-text">翻譯 11-12回</span>
+                    </div>
+                    <div class="task-item" data-task-id="cloze_26_30" data-category="cloze">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📝</span>
+                        <span class="task-text">克漏字 26-30回</span>
+                    </div>
+                    <div class="task-item" data-task-id="reading_26_30" data-category="reading">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📖</span>
+                        <span class="task-text">閱讀 26-30回</span>
+                    </div>
+                    <div class="task-item" data-task-id="essay_6" data-category="essay">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">✒️</span>
+                        <span class="task-text">作文第6篇</span>
+                    </div>
+                    <div class="task-item" data-task-id="b5_review_1" data-category="b5">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📘</span>
+                        <span class="task-text">B5複習 1-2回</span>
+                    </div>
+                    <div class="progress-section">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="week6Progress"></div>
+                        </div>
+                        <div class="progress-text">完成度: <span id="week6Percent">0%</span></div>
+                    </div>
+                </div>
+                <div class="celebration" id="celebration6">
+                    <h2>🎉 第6週完成！</h2>
+                    <p>複習整合得很好！</p>
+                </div>
+            </div>
+
+            <!-- Week 7 -->
+            <div class="week-content" id="week7">
+                <div class="class-info">
+                    <h3>📅 第7週 (8/17)</h3>
+                    <p><strong>課程：</strong>L3-4複習 + 圖表作文</p>
+                </div>
+                <div class="tasks">
+                    <h3>✅ 學習任務</h3>
+                    <div class="task-item" data-task-id="vocab_31_35" data-category="vocab">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📚</span>
+                        <span class="task-text">單字 31-35回</span>
+                    </div>
+                    <div class="task-item" data-task-id="translation_13" data-category="translation">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">✍️</span>
+                        <span class="task-text">翻譯第13回</span>
+                    </div>
+                    <div class="task-item" data-task-id="cloze_31_35" data-category="cloze">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📝</span>
+                        <span class="task-text">克漏字 31-35回</span>
+                    </div>
+                    <div class="task-item" data-task-id="reading_31_35" data-category="reading">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📖</span>
+                        <span class="task-text">閱讀 31-35回</span>
+                    </div>
+                    <div class="task-item" data-task-id="mock_7" data-category="mock">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📋</span>
+                        <span class="task-text">模擬測驗第2回</span>
+                    </div>
+                    <div class="task-item" data-task-id="essay_7" data-category="essay">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">✒️</span>
+                        <span class="task-text">作文第7篇</span>
+                    </div>
+                    <div class="task-item" data-task-id="b5_review_2" data-category="b5">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📘</span>
+                        <span class="task-text">B5複習 3-4回</span>
+                    </div>
+                    <div class="progress-section">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="week7Progress"></div>
+                        </div>
+                        <div class="progress-text">完成度: <span id="week7Percent">0%</span></div>
+                    </div>
+                </div>
+                <div class="celebration" id="celebration7">
+                    <h2>🎉 第7週完成！</h2>
+                    <p>最後衝刺階段！</p>
+                </div>
+            </div>
+
+            <!-- Week 8 -->
+            <div class="week-content" id="week8">
+                <div class="class-info">
+                    <h3>📅 第8週 (8/24)</h3>
+                    <p><strong>課程：</strong>總複習 + 綜合演練</p>
+                </div>
+                <div class="tasks">
+                    <h3>✅ 學習任務</h3>
+                    <div class="task-item" data-task-id="vocab_36_40" data-category="vocab">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📚</span>
+                        <span class="task-text">單字 36-40回</span>
+                    </div>
+                    <div class="task-item" data-task-id="translation_14" data-category="translation">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">✍️</span>
+                        <span class="task-text">翻譯第14回</span>
+                    </div>
+                    <div class="task-item" data-task-id="cloze_36_40" data-category="cloze">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📝</span>
+                        <span class="task-text">克漏字 36-40回</span>
+                    </div>
+                    <div class="task-item" data-task-id="reading_36_40" data-category="reading">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📖</span>
+                        <span class="task-text">閱讀 36-40回</span>
+                    </div>
+                    <div class="task-item" data-task-id="final_mock" data-category="mock">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📋</span>
+                        <span class="task-text">總複習模擬考</span>
+                    </div>
+                    <div class="task-item" data-task-id="essay_8" data-category="essay">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">✒️</span>
+                        <span class="task-text">作文第8篇</span>
+                    </div>
+                    <div class="task-item" data-task-id="b5_review_3" data-category="b5">
+                        <div class="checkbox"></div>
+                        <span class="task-icon">📘</span>
+                        <span class="task-text">B5複習第5回</span>
+                    </div>
+                    <div class="progress-section">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="week8Progress"></div>
+                        </div>
+                        <div class="progress-text">完成度: <span id="week8Percent">0%</span></div>
+                    </div>
+                </div>
+                <div class="celebration" id="celebration8">
+                    <h2>🎉 暑期課程完成！</h2>
+                    <p>🌟 八週努力圓滿達成！</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <button class="nav-btn primary" id="saveBtn">
+                <span class="nav-icon">💾</span>
+                <span>保存</span>
+            </button>
+            <button class="nav-btn" id="statsBtn">
+                <span class="nav-icon">📊</span>
+                <span>統計</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 統計模態框 -->
+    <div id="statsModal" class="modal">
+        <div class="modal-content" style="max-width: 90%; max-height: 80vh; overflow-y: auto;">
+            <span class="close" onclick="closeStatsModal()">&times;</span>
+            <h2>📊 學習統計</h2>
+            
+            <div style="margin: 20px 0;">
+                <div style="background: #f0f8ff; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <h3 style="color: #4c51bf; margin-bottom: 10px;">📈 總體進度</h3>
+                    <div style="font-size: 2rem; font-weight: bold; color: #4c51bf; text-align: center;" id="statsTotal">0%</div>
+                    <div style="text-align: center; color: #666; margin-top: 5px;" id="statsProgress">已完成 0 / 總共 0 項任務</div>
+                </div>
+
+                <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <h3 style="color: #666; margin-bottom: 10px;">📚 各科目完成情況</h3>
+                    <div id="categoryStats"></div>
+                </div>
+
+                <div style="background: #f0fff4; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <h3 style="color: #38a169; margin-bottom: 10px;">📅 週次完成情況</h3>
+                    <div id="weekStats"></div>
+                </div>
+
+                <div style="background: #fffaf0; padding: 15px; border-radius: 8px;">
+                    <h3 style="color: #ed8936; margin-bottom: 10px;">🏆 學習成就</h3>
+                    <div id="achievements"></div>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px; text-align: center;">
+                <button onclick="closeStatsModal()" style="background: #4c51bf; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 500;">關閉</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 任務數據結構
+        const taskData = {
+            vocab: ['vocab_1_5', 'vocab_6_10', 'vocab_11_15', 'vocab_16_20', 'vocab_21_25', 'vocab_26_30', 'vocab_31_35', 'vocab_36_40'],
+            translation: ['translation_1_2', 'translation_3_4', 'translation_5_6', 'translation_7_8', 'translation_9_10', 'translation_11_12', 'translation_13', 'translation_14'],
+            cloze: ['cloze_1_5', 'cloze_6_10', 'cloze_11_15', 'cloze_16_20', 'cloze_21_25', 'cloze_26_30', 'cloze_31_35', 'cloze_36_40'],
+            reading: ['reading_1_5', 'reading_6_10', 'reading_11_15', 'reading_16_20', 'reading_21_25', 'reading_26_30', 'reading_31_35', 'reading_36_40'],
+            essay: ['essay_1', 'essay_2', 'essay_3', 'essay_4', 'essay_5', 'essay_6', 'essay_7', 'essay_8'],
+            mock: ['mock_5', 'mock_7', 'final_mock'],
+            b5: ['b5_1', 'b5_2', 'b5_3', 'b5_4', 'b5_5', 'b5_review_1', 'b5_review_2', 'b5_review_3']
+        };
+
+        // 週次任務配置
+        const weekTasks = {
+            1: ['vocab_1_5', 'translation_1_2', 'cloze_1_5', 'reading_1_5', 'essay_1', 'b5_1'],
+            2: ['vocab_6_10', 'translation_3_4', 'cloze_6_10', 'reading_6_10', 'essay_2', 'b5_2'],
+            3: ['vocab_11_15', 'translation_5_6', 'cloze_11_15', 'reading_11_15', 'essay_3', 'b5_3'],
+            4: ['vocab_16_20', 'translation_7_8', 'cloze_16_20', 'reading_16_20', 'essay_4', 'b5_4'],
+            5: ['vocab_21_25', 'translation_9_10', 'cloze_21_25', 'reading_21_25', 'mock_5', 'essay_5', 'b5_5'],
+            6: ['vocab_26_30', 'translation_11_12', 'cloze_26_30', 'reading_26_30', 'essay_6', 'b5_review_1'],
+            7: ['vocab_31_35', 'translation_13', 'cloze_31_35', 'reading_31_35', 'mock_7', 'essay_7', 'b5_review_2'],
+            8: ['vocab_36_40', 'translation_14', 'cloze_36_40', 'reading_36_40', 'final_mock', 'essay_8', 'b5_review_3']
+        };
+
+        // 全局變量
+        let progress = {};
+
+        // 初始化
+        function init() {
+            loadProgress();
+            setupEventListeners();
+            updateAllProgress();
+        }
+
+        // 載入進度
+        function loadProgress() {
+            const saved = JSON.parse(localStorage.getItem('englishProgress') || '{}');
+            progress = saved;
+            
+            Object.keys(progress).forEach(taskId => {
+                if (progress[taskId]) {
+                    const elements = document.querySelectorAll(`[data-task-id="${taskId}"]`);
+                    elements.forEach(element => {
+                        if (element) {
+                            element.classList.add('completed');
+                        }
+                    });
+                }
+            });
+        }
+
+        // 設置事件監聽器
+        function setupEventListeners() {
+            // 任務項目點擊事件
+            document.querySelectorAll('.task-item').forEach(item => {
+                const taskId = item.getAttribute('data-task-id');
+                const category = item.getAttribute('data-category');
+                
+                if (taskId && category) {
+                    item.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        toggleTask(taskId, category);
+                    });
+                }
+            });
+
+            // 週次標籤切換
+            document.querySelectorAll('.week-tab').forEach((tab, index) => {
+                tab.addEventListener('click', function() {
+                    showWeek(index + 1);
+                });
+            });
+
+            // 保存按鈕
+            document.getElementById('saveBtn').addEventListener('click', saveProgress);
+            
+            // 統計按鈕
+            document.getElementById('statsBtn').addEventListener('click', showStatsModal);
+        }
+
+        // 切換任務狀態
+        function toggleTask(taskId, category) {
+            progress[taskId] = !progress[taskId];
+            
+            const elements = document.querySelectorAll(`[data-task-id="${taskId}"]`);
+            elements.forEach(element => {
+                if (progress[taskId]) {
+                    element.classList.add('completed');
+                } else {
+                    element.classList.remove('completed');
+                }
+            });
+
+            if (progress[taskId]) {
+                showCelebration(taskId);
+            }
+            
+            updateAllProgress();
+            localStorage.setItem('englishProgress', JSON.stringify(progress));
+        }
+
+        // 顯示慶祝動畫
+        function showCelebration(taskId) {
+            for (let week = 1; week <= 8; week++) {
+                const weekTaskList = weekTasks[week] || [];
+                const completed = weekTaskList.every(task => progress[task]);
+                
+                if (completed && weekTaskList.includes(taskId)) {
+                    const celebration = document.getElementById(`celebration${week}`);
+                    if (celebration) {
+                        celebration.classList.add('show');
+                        setTimeout(() => {
+                            celebration.classList.remove('show');
+                        }, 3000);
+                    }
+                    break;
+                }
+            }
+        }
+
+        // 更新所有進度
+        function updateAllProgress() {
+            updateCategoryProgress();
+            updateWeekProgress();
+            updateTotalProgress();
+        }
+
+        // 更新分類進度
+        function updateCategoryProgress() {
+            Object.keys(taskData).forEach(category => {
+                const tasks = taskData[category] || [];
+                const completed = tasks.filter(task => progress[task]).length;
+                const percentage = tasks.length > 0 ? Math.round((completed / tasks.length) * 100) : 0;
+                
+                const element = document.getElementById(`${category}Progress`);
+                if (element) {
+                    element.textContent = `${percentage}%`;
+                }
+            });
+        }
+
+        // 更新週進度
+        function updateWeekProgress() {
+            for (let week = 1; week <= 8; week++) {
+                const tasks = weekTasks[week] || [];
+                const completed = tasks.filter(task => progress[task]).length;
+                const percentage = tasks.length > 0 ? Math.round((completed / tasks.length) * 100) : 0;
+                
+                const progressBar = document.getElementById(`week${week}Progress`);
+                const progressText = document.getElementById(`week${week}Percent`);
+                
+                if (progressBar) progressBar.style.width = `${percentage}%`;
+                if (progressText) progressText.textContent = `${percentage}%`;
+            }
+        }
+
+        // 更新總進度
+        function updateTotalProgress() {
+            const allTasks = Object.values(weekTasks).flat();
+            const completed = allTasks.filter(task => progress[task]).length;
+            const percentage = allTasks.length > 0 ? Math.round((completed / allTasks.length) * 100) : 0;
+            
+            const totalElement = document.getElementById('totalProgress');
+            if (totalElement) totalElement.textContent = `${percentage}%`;
+        }
+
+        // 切換週次顯示
+        function showWeek(week) {
+            document.querySelectorAll('.week-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.week-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            const weekContent = document.getElementById(`week${week}`);
+            if (weekContent) {
+                weekContent.classList.add('active');
+            }
+            
+            const activeTab = document.querySelector(`[data-week="${week}"]`);
+            if (activeTab) {
+                activeTab.classList.add('active');
+            }
+        }
+
+        // 保存進度
+        function saveProgress() {
+            localStorage.setItem('englishProgress', JSON.stringify(progress));
+            alert('✅ 進度已保存！');
+        }
+
+        // 顯示統計模態框
+        function showStatsModal() {
+            updateStatsContent();
+            document.getElementById('statsModal').style.display = 'block';
+        }
+
+        // 關閉統計模態框
+        function closeStatsModal() {
+            document.getElementById('statsModal').style.display = 'none';
+        }
+
+        // 更新統計內容
+        function updateStatsContent() {
+            // 計算總進度
+            const allTasks = Object.values(weekTasks).flat();
+            const completedTasks = allTasks.filter(task => progress[task]).length;
+            const totalTasks = allTasks.length;
+            const totalPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+            document.getElementById('statsTotal').textContent = `${totalPercentage}%`;
+            document.getElementById('statsProgress').textContent = `已完成 ${completedTasks} / 總共 ${totalTasks} 項任務`;
+
+            // 各科目統計
+            const categoryStatsHTML = Object.keys(taskData).map(category => {
+                const tasks = taskData[category] || [];
+                const completed = tasks.filter(task => progress[task]).length;
+                const percentage = tasks.length > 0 ? Math.round((completed / tasks.length) * 100) : 0;
+                const icons = {
+                    vocab: '📚', translation: '✍️', cloze: '📝', 
+                    reading: '📖', essay: '✒️', b5: '📘', mock: '📋'
+                };
+                const names = {
+                    vocab: '單字', translation: '翻譯', cloze: '克漏字',
+                    reading: '閱讀', essay: '作文', b5: 'B5課文', mock: '模擬考'
+                };
+                
+                return `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: white; border-radius: 6px;">
+                        <span>${icons[category]} ${names[category]}</span>
+                        <span style="font-weight: bold; color: ${percentage === 100 ? '#38a169' : '#666'};">${percentage}% (${completed}/${tasks.length})</span>
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('categoryStats').innerHTML = categoryStatsHTML;
+
+            // 週次統計
+            const weekStatsHTML = Array.from({length: 8}, (_, i) => {
+                const week = i + 1;
+                const tasks = weekTasks[week] || [];
+                const completed = tasks.filter(task => progress[task]).length;
+                const percentage = tasks.length > 0 ? Math.round((completed / tasks.length) * 100) : 0;
+                
+                return `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; padding: 8px; background: white; border-radius: 6px;">
+                        <span>📅 第${week}週</span>
+                        <span style="font-weight: bold; color: ${percentage === 100 ? '#38a169' : '#666'};">${percentage}% (${completed}/${tasks.length})</span>
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('weekStats').innerHTML = weekStatsHTML;
+
+            // 成就統計
+            const achievements = [];
+            
+            // 檢查完成的週次
+            const completedWeeks = [];
+            for (let week = 1; week <= 8; week++) {
+                const tasks = weekTasks[week] || [];
+                const completed = tasks.filter(task => progress[task]).length;
+                if (completed === tasks.length && tasks.length > 0) {
+                    completedWeeks.push(week);
+                }
+            }
+
+            // 檢查完成的科目
+            const completedCategories = [];
+            Object.keys(taskData).forEach(category => {
+                const tasks = taskData[category] || [];
+                const completed = tasks.filter(task => progress[task]).length;
+                if (completed === tasks.length && tasks.length > 0) {
+                    completedCategories.push(category);
+                }
+            });
+
+            // 生成成就
+            if (completedTasks === 0) {
+                achievements.push('🌱 開始學習之旅');
+            } else if (completedTasks >= 1) {
+                achievements.push('🎯 首次完成任務');
+            }
+
+            if (completedTasks >= 10) {
+                achievements.push('📈 學習達人（完成10項任務）');
+            }
+
+            if (completedTasks >= 24) {
+                achievements.push('🏃‍♂️ 學習狂人（完成一半任務）');
+            }
+
+            if (completedWeeks.length >= 1) {
+                achievements.push('🎉 週次達成者');
+            }
+
+            if (completedWeeks.length >= 4) {
+                achievements.push('💪 堅持不懈（完成4週）');
+            }
+
+            if (completedCategories.length >= 1) {
+                achievements.push('🎯 專科精通');
+            }
+
+            if (totalPercentage === 100) {
+                achievements.push('👑 暑期英文學習王者');
+            }
+
+            const achievementsHTML = achievements.length > 0 
+                ? achievements.map(achievement => `
+                    <div style="background: linear-gradient(45deg, #ffecd2, #fcb69f); padding: 8px 12px; margin: 5px 0; border-radius: 20px; text-align: center; font-weight: 500;">
+                        ${achievement}
+                    </div>
+                `).join('')
+                : '<div style="text-align: center; color: #666; padding: 10px;">繼續努力，獲得更多成就！</div>';
+
+            document.getElementById('achievements').innerHTML = achievementsHTML;
+        }
+
+        // 初始化應用
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+
+        // 點擊模態框外部關閉
+        window.onclick = function(event) {
+            const statsModal = document.getElementById('statsModal');
+            if (event.target === statsModal) {
+                closeStatsModal();
+            }
+        };
+    </script>
+</body>
+</html>
